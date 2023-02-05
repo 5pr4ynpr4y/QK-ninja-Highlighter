@@ -1,0 +1,41 @@
+// Create a custom style to highlight words with different colors
+var style = document.createElement('style');
+style.innerHTML = '.highlight { background-color: yellow; }';
+document.head.appendChild(style);
+
+// Add a context menu item to the right-click menu
+browser.contextMenus.create({
+    id: 'highlight-menu-item',
+    title: 'Highlight',
+    contexts: ['selection'],
+    onclick: function(info, tab) {
+        // Get the selected text
+        var selection = info.selectionText.trim();
+        if (!selection) {
+            return;
+        }
+
+        // Get the nodes that contain the selected text
+        var textNodes = [];
+        var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        while (node = walker.nextNode()) {
+            textNodes.push(node);
+        }
+
+        // Highlight the selected text
+        textNodes.forEach(function(textNode) {
+            var parent = textNode.parentNode;
+            var text = textNode.textContent;
+            var index = text.indexOf(selection);
+            if (index !== -1) {
+                var span = document.createElement('span');
+                span.className = 'highlight';
+                span.textContent = selection;
+                textNode.splitText(index);
+                textNode.nextSibling.splitText(selection.length);
+                span.appendChild(textNode.nextSibling);
+                parent.insertBefore(span, textNode.nextSibling);
+            }
+        });
+    }
+});
